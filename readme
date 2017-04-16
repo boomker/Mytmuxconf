@@ -1,4 +1,9 @@
 change logs:
     2017-4-16 17:01:04:
-        1.可选复制功能插件
+        Functions:
+            1.可选复制功能插件
+
+        Bugs:
+            1.发现和lrzsz有冲突
+            2.Xshell client 和 远程主机同时开启tmux会让xshell中的tmux界面异常
 
