@@ -1,9 +1,1 @@
-change logs:
-    2017-4-16 17:01:04:
-        Functions:
-            1.可选复制功能插件
-
-        Bugs:
-            1.发现和lrzsz有冲突
-            2.Xshell client 和 远程主机同时开启tmux会让xshell中的tmux界面异常
-
+1. 复制cp 两个脚本到PATH(/usr/local/bin)下，复制配置文件到用户目录下($HOME)
