@@ -1,4 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# *************************************************
+#
+#       Filename: tmux-mem-cpu-load
+#         Author: Shingo
+#          Email: gmboomker@gmail.com
+#         Create: 2018-04-27 13:19:41
+#       Description: -
+#
+# *************************************************
 
 """
 Basic CPU & Memory Usage for Tmux
@@ -16,9 +25,11 @@ https://github.com/tony/tmux-config.
 
 import os
 import sys
+import psutil
+
+
 if os.name != 'posix':
         sys.exit('platform not supported')
-import psutil
 
 
 def get_dashes(perc):
@@ -29,14 +40,15 @@ def get_dashes(perc):
 
 def info():
     mem = psutil.virtual_memory()
-    if hasattr(mem, 'cached'):
-        memused = mem.used - mem.cached
-    else:
-        memused = mem.used
+    if hasattr(mem, 'available'):
+        # memused = mem.used - mem.cached
+        memfree = mem.available
+    # else:
+        # memused = mem.used
 
     cpu_dashes, cpu_empty_dashes = get_dashes(psutil.cpu_percent(interval=0.1))
-    line = "%s/%sMB %5s%%" % (
-        str(int(memused / 1024 / 1024)),
+    line = "%s/%sMB|%4s%%" % (
+        str(int(memfree / 1024 / 1024)),
         str(int(mem.total / 1024 / 1024)),
         # cpu_dashes, cpu_empty_dashes,
         psutil.cpu_percent(interval=0.1),
@@ -47,9 +59,10 @@ def info():
 
 def main():
     try:
-        print info()
+        print(info())
     except (KeyboardInterrupt, SystemExit):
         pass
+
 
 if __name__ == '__main__':
     main()
