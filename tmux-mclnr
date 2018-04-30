@@ -85,14 +85,14 @@ def mem_cpu_info():
 
 
 def main():
-    tty = subprocess.check_output(['tmux', 'display', '-p', '#{pane_tty}'])
-    tty = str(tty, encoding='utf-8').strip('\n')
-    sshpara = subprocess.check_output(['ps', '-t', tty, '-o', 'command'])
-    sshpara = str(sshpara, encoding='utf-8').split('\n')
-    # __import__('ipdb').set_trace()
-    for i in sshpara:
-        if 'ssh' in i:
-            raise SystemExit
+    # tty = subprocess.check_output(['tmux', 'display', '-p', '#{pane_tty}'])
+    # tty = str(tty, encoding='utf-8').strip('\n')
+    # sshpara = subprocess.check_output(['ps', '-t', tty, '-o', 'command'])
+    # sshpara = str(sshpara, encoding='utf-8').split('\n')
+    # # __import__('ipdb').set_trace()
+    # for i in sshpara:
+    #     if 'ssh' in i:
+    #         raise SystemExit
     print(mem_cpu_info(), get_net_rate(1, 0))
     # print(nettatol_recvrate, nettatol_sentrate)
 
