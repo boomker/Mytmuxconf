@@ -46,28 +46,20 @@ def get_dashes(perc):
     return dashes, empty_dashes
 
 
-# def bytes2human(n):
-#     symbols = ('K', 'M', 'G', 'T', 'E')
-#     prefix = {}
-#     for i, s in enumerate(symbols):
-#         prefix[s] = 1 << (i + 1) * 10
-#     for s in reversed(symbols):
-#         if n >= prefix[s]:
-#             value = float(n) / prefix[s]
-#             return '%.1f%sB' % (value, s)
-#         if n <= 1024:
-#             return '1KB'
-
-
 def get_net_rate(D, U):
     net_recv_bytes = psutil.net_io_counters(pernic=True)[nictype][D]
     net_sent_bytes = psutil.net_io_counters(pernic=True)[nictype][U]
     time.sleep(1)
-    sentinc = int(psutil.net_io_counters(pernic=True)[nictype][U]) - net_sent_bytes
-    recvinc = int(psutil.net_io_counters(pernic=True)[nictype][D]) - net_recv_bytes
+    net_srecv_bytes = psutil.net_io_counters(pernic=True)[nictype][D]
+    net_ssent_bytes = psutil.net_io_counters(pernic=True)[nictype][U]
+    sentinc = int(net_ssent_bytes) - net_sent_bytes
+    recvinc = int(net_srecv_bytes) - net_recv_bytes
+    # sentinc = int(psutil.net_io_counters(pernic=True)[nictype][U]) - net_sent_bytes
+    # recvinc = int(psutil.net_io_counters(pernic=True)[nictype][D]) - net_recv_bytes
     nettatol_sentrate = "↑{0}/s".format(str(hsize.bytes2human(sentinc)))
     nettatol_recvrate = "↓{0}/s".format(str(hsize.bytes2human(recvinc)))
-    return str(nettatol_recvrate), str(nettatol_sentrate)
+    return ("{0} {1}".format(nettatol_recvrate, nettatol_sentrate))
+    # return str(nettatol_recvrate), str(nettatol_sentrate)
 
 
 def mem_cpu_info():
@@ -92,7 +84,8 @@ def mem_cpu_info():
 
 
 def main():
-    print(mem_cpu_info(), get_net_rate(1, 0)[0], get_net_rate(1, 0)[1])
+    print(mem_cpu_info(), get_net_rate(1, 0))
+    # print(mem_cpu_info(), get_net_rate(1, 0)[0], get_net_rate(1, 0)[1])
     # print(nettatol_recvrate, nettatol_sentrate)
 
     # print(mem_cpu_info())
