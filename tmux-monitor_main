@@ -1,0 +1,38 @@
+#!/usr/bin/env python3
+
+
+import os
+import subprocess
+
+
+def main():
+    tty = subprocess.check_output(['tmux', 'display', '-p', '#{pane_tty}'])
+    tty = str(tty, encoding='utf-8').strip('\n')
+    sshpara = subprocess.check_output(['/bin/ps', '-t', tty, '-o', 'command'])
+    sshpara = str(sshpara, encoding='utf-8').split('\n')
+    for i in sshpara:
+        if 'ssh' in i:
+            sshcmd = str(i)
+            # __import__('ipdb').set_trace()
+            sco = subprocess.check_output
+            pyenv = "PYTHONIOENCODING=utf-8 python3"
+            rminfotmp = sco("{0} '{1}' < '{2}'".format(sshcmd, pyenv, payloadpath), shell=True)
+            # rminfotmp = subprocess.check_output("{0} 'PYTHONIOENCODING=utf-8 python3' < '{1}'".format(sshcmd, payloadpath), shell=True)
+            rminfo = str(rminfotmp, encoding='utf-8').strip('\n')
+            print(rminfo)
+
+
+global payloadpath
+# curpath = os.getcwd()
+curpath = os.path.dirname(os.path.realpath(__file__))
+payloadpath = curpath + "/tmux-monitor"
+# print(payloadpath)
+# mclnrinfo = subprocess.check_output(['/usr/local/bin/python3', '/usr/local/bin/tmux-monitor'])
+# pypath = subprocess.check_output(['which', 'python3'])
+mclnrinfo = subprocess.check_output("python3 {0}".format(payloadpath), shell=True)
+mclnrinfo = str(mclnrinfo, encoding='utf-8').strip('\n')
+print(mclnrinfo)
+
+
+if __name__ == "__main__":
+    main()
