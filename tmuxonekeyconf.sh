@@ -17,6 +17,6 @@
 
 git clone http://github.com/boomker/Mytmuxconf.git ~/
 cd ~/Mytmuxconf ||exit
-sudo cp ./tmux-monitor ./tmux-monitor_main /usr/local/bin
-sudo cp ./tmux-Username_and_Hostname /usr/local/bin
-tic xterm-256color-italic.terminfo
+sudo cp ./tmux-monitor/* /usr/local/bin
+# sudo cp ./.tmux.conf ~/
+tic ./request/xterm-256color-italic.terminfo

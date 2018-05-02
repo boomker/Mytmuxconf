@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+
+
+import os
+import sys
+import subprocess
+import psutil
+
+sco = subprocess.check_output
+if os.uname()[0] == 'Darwin':
+    nictype = 'en0'
+else:
+    nictype = 'eth0'
+
+
+def get_remac_info(lrlocation):
+    # # def get_remac_info(lrlocation):
+    # sys.argv.append("")
+    # slorsr = sys.argv[1]
+    # global sco
+    # sco = subprocess.check_output
+    # # global payloadpath
+    # curpath = os.path.dirname(os.path.realpath(__file__))
+    # payloadpath = curpath + "/tmux-monitor"
+    # tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
+    # tty = str(tty, encoding='utf-8').strip('\n')
+    # # tty = "/dev/ttys009"
+    # sshpara = sco(['/bin/ps', '-t', tty, '-o', 'command'])
+    # sshpara = str(sshpara, encoding='utf-8').split('\n')
+    # sshcmd = [str(i) for i in sshpara if 'ssh ' in i]
+    # sshcmd = sshcmd[0]
+    # # global sshcmd
+    pyenv = "PYTHONIOENCODING=utf-8 python3"
+    pyenvc = r"'PYTHONIOENCODING=utf-8 python3 -c"
+    getuserpara = r'"import os;print(os.getlogin())"\\\''
+    rsshusern = sco('{0} {1} {2}'.format(
+        sshcmd, pyenvc, getuserpara), shell=True)
+    rsshusern = str(rsshusern, encoding='utf-8').strip('\n')
+    # sco('ssh aecs \'PYTHONIOENCODING=utf-8 python3 -c "import os;print(os.getlogin())"\'', shell=True)
+
+# sshipaddr = sco('ssh aecs \'PYTHONIOENCODING=utf-8 python3 -c "import psutil;print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\'', shell=True)
+    # getipadpara = r'"import psutil;print(psutil.net_if_addrs())"\\\''
+    # __import__('ipdb').set_trace()
+    getipadpara = r'"import psutil;print(psutil.net_if_addrs()[\"eth0\"][0][1])"\\\''
+    reminsiip = sco('{0} {1} {2}'.format(
+        sshcmd, pyenvc, getipadpara), shell=True)
+    reminsiip = str(reminsiip, encoding='utf-8').strip('\n')
+    if lrlocation == "left":
+        print("{0}@{1}".format(rsshusern, reminsiip))
+    else:
+        rminfotmp = sco("{0} '{1}' < '{2}'".format(
+            sshcmd, pyenv, payloadpath), shell=True)
+        rminfo = str(rminfotmp, encoding='utf-8').strip('\n')
+        print(rminfo)
+
+
+def main():
+    sys.argv.append("")
+    slorsr = sys.argv[1]
+    global payloadpath
+    # # curpath = os.getcwd()
+    curpath = os.path.dirname(os.path.realpath(__file__))
+    payloadpath = curpath + "/tmux-monitor"
+    mclnrinfo = subprocess.check_output(
+        "python3 {0}".format(payloadpath), shell=True)
+    mclnrinfo = str(mclnrinfo, encoding='utf-8').strip('\n')
+
+    tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
+    tty = str(tty, encoding='utf-8').strip('\n')
+    # tty = "ttys009"
+    sshpara = sco(['/bin/ps', '-t', tty, '-o', 'command'])
+    sshpara = str(sshpara, encoding='utf-8').split('\n')
+
+    username = os.getlogin()
+    hostaddr = psutil.net_if_addrs()[nictype][0][1]
+    global sshcmd
+    sshcmd = [str(i) for i in sshpara if 'ssh ' in i]
+    if len(sshcmd) == 0:
+        if slorsr == "left":
+            print("{0}@{1}".format(username, hostaddr))
+        else:
+            print(mclnrinfo)
+    else:
+        sshcmd = sshcmd[0]
+        get_remac_info(slorsr)
+
+
+if __name__ == "__main__":
+    main()
