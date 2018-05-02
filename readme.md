@@ -5,6 +5,6 @@ curl -fsSL https://raw.githubusercontent.com/boomker/Mytmuxconf/master/tmuxoneke
     set -g status-left ...#(tmuxmain left)... 
     set -g status-right ...#(tmuxmain right)... 
 3. 如果ssh到远程机器出现终端字符显示异常，加上alias alias=tssh='TERM=xterm-256color ssh'
-![img](https://raw.githubusercontent.com/boomker/Mytmuxconf/img/master/tmuxpreview.png)
-![img](https://raw.githubusercontent.com/boomker/Mytmuxconf/img/master/tmuxpreview1.png)
-![img](https://raw.githubusercontent.com/boomker/Mytmuxconf/img/master/tmux-iterm2-setting.png)
+![img](https://raw.githubusercontent.com/boomker/Mytmuxconf/tree/master/img/tmuxpreview.png)
+![img](https://raw.githubusercontent.com/boomker/Mytmuxconf/tree/master/img/tmuxpreview1.png)
+![img](https://raw.githubusercontent.com/boomker/Mytmuxconf/tree/master/img/tmux-iterm2-setting.png)
