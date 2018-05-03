@@ -28,11 +28,12 @@ def colouroutput(u, h, **m):
     # pass
     colourprefix = ('fg=', 'bg=')
     f, b = colourprefix
-    uhcolourdef = ('magenta', 'default', 'colour148', 'colour24')
-    fger, bger, fgd, bgd = uhcolourdef
-    uhd = dict(un=u, ha=h, fgerr=f + fger, bgerr=b + bger, fgdt=f + fgd, bgdt=b + bgd)
+    uhcolourdef = (',none', 'magenta,blink', 'default', 'colour148', 'colour24')
+    na, fger, bger, fgd, bgd = uhcolourdef
+    uhd = dict(un=u, ha=h, fgerr=f + fger, bgerr=b + bger,
+               fgdtn=f + fgd + na, fgdt=f + fgd, bgdt=b + bgd)
     if u == "root":
-        print("#[{fgerr},{bgerr}]{un}#[{fgdt},{bgdt}]@{ha}".format(**uhd))
+        print("#[{fgerr},{bgerr}]{un}#[{fgdtn},{bgdt}]@{ha}".format(**uhd))
     elif u is None and h is None:
         pass
     else:
@@ -53,22 +54,22 @@ def colouroutput(u, h, **m):
         dinf1 = ''.join(dinfl[0:4])
         dinf2 = dinfl[4]
         dinf3 = ''.join(dinfl[5:9])
-        monitorcoldef = ('colour24', 'black', 'white',
-                         'yellow,bright', 'magenta', 'default')
-        fgmc, fgnet, fgdrv, cbgc, cfgerr, cdebg = monitorcoldef
+        monitorcoldef = (',none', 'colour24', 'black', 'white',
+                         'yellow,bright', 'magenta,bold,blink', 'default')
+        na, fgmc, fgnet, fgdrv, cbgc, cfgerr, cdebg = monitorcoldef
         mond = dict(mcs=mc, nis=net, dis=disk, cdebgc=b + cdebg, cerrfg=f + cfgerr,
                     mci1=mcsl[0], mci2=mcsl[2], mci3=mcsl[-2], mcfg=f + fgmc,
-                    netfg=f + fgnet, drvfg=f + fgdrv, cbyb=b + cbgc,
-                    di1=dinf1, di2=dinf2, di3=dinf3)
+                    netfg=f + fgnet, drvfg=f + fgdrv, di1=dinf1, di2=dinf2, di3=dinf3,
+                    cbyb=b + cbgc, mcfgn=f + fgmc + na, drvfgn=f + fgdrv + na)
         if cup > 85.0:
-            mcis = "#[{mcfg},{cbyb}]{mci1} #[{cerrfg},{cdebgc}]{mci2}#[{mcfg},{cbyb}]{mci3}".format(**mond)
+            mcis = "#[{mcfg},{cbyb}]{mci1} #[{cerrfg},{cdebgc}]{mci2}#[{mcfgn},{cbyb}]{mci3}".format(**mond)
         else:
             mcis = "#[{mcfg},{cbyb}]{mcs}".format(**mond)
         # -------------------------------------------------------
         nets = "#[{netfg},{cbyb}]{nis}".format(**mond)
         # -------------------------------------------------------
         if rpup > 80.0:
-            drvs = "#[{mcfg},{cbyb}]{di1} #[{cerrfg},{cdebgc}]{di2}#[{mcfg},{cbyb}]{di3}".format(**mond)
+            drvs = "#[{drvfg},{cbyb}]{di1} #[{cerrfg},{cdebgc}]{di2}#[{drvfgn},{cbyb}]{di3}".format(**mond)
         else:
             drvs = "#[{drvfg},{cbyb}]{dis}".format(**mond)
 
