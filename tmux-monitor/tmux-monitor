@@ -57,7 +57,7 @@ def get_mem_cpu_info():
     # else:
         # memused = mem.used
 
-    cpuperc = psutil.cpu_percent(interval=0.1)
+    cpuperc = psutil.cpu_percent(interval=1.0)
     # cpu_dashes, cpu_empty_dashes = get_dashes(psutil.cpu_percent(interval=0.1))
     line = "{0}/{1}| {2}%".format(
         # cpu_dashes, cpu_empty_dashes,
