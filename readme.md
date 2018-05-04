@@ -8,3 +8,4 @@
 ![img](https://github.com/boomker/Mytmuxconf/blob/master/img/tmuxpreview.png)
 ![img](https://github.com/boomker/Mytmuxconf/blob/master/img/tmuxpreview1.png)
 ![img](https://github.com/boomker/Mytmuxconf/blob/master/img/tmux-iterm2-setting.png)
+![img](https://github.com/boomker/Mytmuxconf/blob/master/img/tmuxstatusline.gif)

@@ -28,6 +28,7 @@ import sys
 import time
 import psutil
 import mhsize
+import threading
 # import subprocess
 
 
@@ -49,7 +50,10 @@ def get_dashes(perc):
 
 def get_mem_cpu_info():
     mem = psutil.virtual_memory()
-    memtotal = str(mhsize.bytes2human(mem.total))
+    memtotal = str(mhsize.bytes2human(mem.total, precision=0))
+    memtn = int(memtotal[:-2])
+    memtu = memtotal[-2:]
+    memtotal = "1GB" if memtn > 1000 and "MB" in memtu else memtotal
     if hasattr(mem, 'available'):
         # memused = mem.used - mem.cached
         memfree = mem.available
@@ -59,24 +63,31 @@ def get_mem_cpu_info():
 
     cpuperc = psutil.cpu_percent(interval=1.0)
     # cpu_dashes, cpu_empty_dashes = get_dashes(psutil.cpu_percent(interval=0.1))
-    line = "{0}/{1}| {2}%".format(
+    # line = "{0}/{1} {2}%".format(
+    #     # cpu_dashes, cpu_empty_dashes,
+    #     memfree, memtotal, cpuperc
+    # )
+    global mcinfo
+    mcinfo = "{0}/{1} {2}%".format(
         # cpu_dashes, cpu_empty_dashes,
         memfree, memtotal, cpuperc
     )
-    return line
+    # return line
 
 
 def get_net_rate(D, U):
     net_recv_bytes = psutil.net_io_counters(pernic=True)[nictype][D]
     net_sent_bytes = psutil.net_io_counters(pernic=True)[nictype][U]
-    time.sleep(1)
+    time.sleep(1.0)
     net_srecv_bytes = psutil.net_io_counters(pernic=True)[nictype][D]
     net_ssent_bytes = psutil.net_io_counters(pernic=True)[nictype][U]
     sentinc = int(net_ssent_bytes) - net_sent_bytes
     recvinc = int(net_srecv_bytes) - net_recv_bytes
     nettatol_sentrate = "↑{0}/s".format(str(mhsize.bytes2human(sentinc)))
     nettatol_recvrate = "↓{0}/s".format(str(mhsize.bytes2human(recvinc)))
-    return ("{0} {1}".format(nettatol_recvrate, nettatol_sentrate))
+    global netrinfo
+    netrinfo = "{0} {1}".format(nettatol_recvrate, nettatol_sentrate)
+    # return ("{0} {1}".format(nettatol_recvrate, nettatol_sentrate))
 
 
 def get_disk_info():
@@ -86,21 +97,38 @@ def get_disk_info():
     macdisk = "disk0"
     rootpartt = macdisk if macdisk in rootpartt else rootpartt
     frpwribytes = psutil.disk_io_counters(perdisk=True)[rootpartt][3]
-    time.sleep(1)
+    time.sleep(1.0)
     srpwribytes = psutil.disk_io_counters(perdisk=True)[rootpartt][3]
     rpwbinc = mhsize.bytes2human(int(srpwribytes - frpwribytes))
+    global diskinfo
     diskinfo = "D:[/:{0}% W↓:{1}/s]".format(
         rootpatusaperc, rpwbinc
     )
-    return diskinfo
+    # return diskinfo
 
 
 def main():
     # print(get_mem_cpu_info(), get_net_rate(1, 0))
+    threads = []
+    for i in range(1):
+        thread1 = threading.Thread(target=get_mem_cpu_info)
+        thread2 = threading.Thread(target=get_net_rate, args=(1, 0))
+        thread3 = threading.Thread(target=get_disk_info)
+        thread1.start()
+        threads.append(thread1)
+        thread2.start()
+        threads.append(thread2)
+        thread3.start()
+        threads.append(thread3)
+        for thread in threads:
+            thread.join()
     lineinfo = "MC:[{0}] N:[{1}] {2}".format(
-        get_mem_cpu_info(),
-        get_net_rate(1, 0),
-        get_disk_info(),
+        mcinfo,
+        netrinfo,
+        diskinfo,
+        # get_mem_cpu_info(),
+        # get_net_rate(1, 0),
+        # get_disk_info(),
     )
     print(lineinfo)
     # try:

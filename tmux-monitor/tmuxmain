@@ -10,6 +10,7 @@ import psutil
 sco = subprocess.check_output
 curpath = os.path.dirname(os.path.realpath(__file__))
 payloadpath = curpath + "/tmux-monitor"
+rolltxtscrp = curpath + "/text_roll.sh"
 # tty = "ttys012"
 tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
 tty = str(tty, encoding='utf-8').strip('\n')
@@ -42,11 +43,26 @@ def colouroutput(u, h, **m):
     if len(m) != 0:
         m = [i for i in m.values()]
         m = m[0]
+        ml = len(m)
         mc = re.split(r'(?<=])(\s+)', m)[0]
         mcsl = re.split('(\s|])', mc)
+        # ['MC:[1.7GB/8GB', ' ', '10.9%', ']', '']
         cup = float(re.split('(\s|])', mc)[2].strip('%'))
         # mccup = re.search('(?<=\s)[\d+.\d+]+(?=%)', mc)
         net = re.split(r'(?<=])(\s+)', m)[2]
+        netsl = re.split('(\[|\]| )', net)
+        netb = re.search('(?<=\[).*(?=\])', net).group(0)
+        if ml > 10:
+            # netr = sco('bash {0} "{1}"'.format(rolltxtscrp, netb), shell=True)
+            netl = netb.split(' ')[0]
+            netr = netb.split(' ')[1]
+            netr = "".strip(' ') if "0.0" in netr else netr
+            netl = "".strip(' ') if "0.0" in netl else netl
+            netlsr = netl + " " + netr
+            netlrl = len((netl + netr))
+            ns23 = netlsr if netlrl == 0 or netlrl >= 16 else netl + netr
+        ns1 = ''.join(netsl[0:2])
+        ns4 = netsl[-2]
         disk = re.split(r'(?<=])(\s+)', m)[-1]
         dinfl = re.split(r'(:|\s)+', disk)
         # ['D', ':', '[/', ':', '41.2%', ' ', 'W↓', ':', '0.0KB/s]']
@@ -57,16 +73,22 @@ def colouroutput(u, h, **m):
         monitorcoldef = (',none', 'colour24', 'black', 'white',
                          'yellow,bright', 'magenta,bold,blink', 'default')
         na, fgmc, fgnet, fgdrv, cbgc, cfgerr, cdebg = monitorcoldef
-        mond = dict(mcs=mc, nis=net, dis=disk, cdebgc=b + cdebg, cerrfg=f + cfgerr,
+        mond = dict(mcs=mc, dis=disk, cdebgc=b + cdebg, cerrfg=f + cfgerr,
                     mci1=mcsl[0], mci2=mcsl[2], mci3=mcsl[-2], mcfg=f + fgmc,
-                    netfg=f + fgnet, drvfg=f + fgdrv, di1=dinf1, di2=dinf2, di3=dinf3,
+                    netfg=f + fgnet, nis=netr, nis1=ns1, nis23=ns23, nis4=ns4,
+                    drvfg=f + fgdrv, di1=dinf1, di2=dinf2, di3=dinf3,
                     cbyb=b + cbgc, mcfgn=f + fgmc + na, drvfgn=f + fgdrv + na)
         if cup > 85.0:
             mcis = "#[{mcfg},{cbyb}]{mci1} #[{cerrfg},{cdebgc}]{mci2}#[{mcfgn},{cbyb}]{mci3}".format(**mond)
+        elif cup == 0.0:
+            mcis = "#[{mcfg},{cbyb}]{mci1}#[{mcfgn},{cbyb}]{mci3}".format(**mond)
         else:
             mcis = "#[{mcfg},{cbyb}]{mcs}".format(**mond)
         # -------------------------------------------------------
-        nets = "#[{netfg},{cbyb}]{nis}".format(**mond)
+        if len(net) > 10:
+            nets = '#[{netfg},{cbyb}]{nis1}{nis23}{nis4}'.format(**mond)
+        else:
+            nets = "#[{netfg},{cbyb}]{nis}".format(**mond)
         # -------------------------------------------------------
         if rpup > 80.0:
             drvs = "#[{drvfg},{cbyb}]{di1} #[{cerrfg},{cdebgc}]{di2}#[{drvfgn},{cbyb}]{di3}".format(**mond)
@@ -86,7 +108,6 @@ def get_remac_info(lrlocation):
     # sco('ssh aecs \'PYTHONIOENCODING=utf-8 python3 -c "import os;print(os.getlogin())"\'', shell=True)
 
 # sshipaddr = sco('ssh aecs \'PYTHONIOENCODING=utf-8 python3 -c "import psutil;print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\'', shell=True)
-    # getipadpara = r'"import psutil;print(psutil.net_if_addrs())"\\\''
     # __import__('ipdb').set_trace()
     getipadpara = r'"import psutil;print(psutil.net_if_addrs()[\"eth0\"][0][1])"\\\''
     reminsiip = sco('{0} {1} {2}'.format(
@@ -112,14 +133,11 @@ def main():
             username = os.getlogin()
             hostaddr = psutil.net_if_addrs()[nictype][0][1]
             colouroutput(username, hostaddr)
-            # if username == "shingo":
-            #     print("#[fg=red,bg=colour24]{0}#[fg=colour148,bg=colour24]@{1}".format(username, hostaddr))
-            # print("{0}@{1}".format(username, hostaddr))
         else:
             mclnrinfo = subprocess.check_output(
                 "python3 {0}".format(payloadpath), shell=True)
+                # "pypy3 {0}".format(payloadpath), shell=True)
             mclnrinfo = str(mclnrinfo, encoding='utf-8').strip('\n')
-            # print(mclnrinfo)
             colouroutput(None, None, m=mclnrinfo)
     else:
         get_remac_info(slorsr)
