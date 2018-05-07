@@ -6,23 +6,21 @@
 #         Author: Shingo
 #          Email: gmboomker@gmail.com
 #         Create: 2018-04-27 13:19:41
-#       Description: -
+#       Description: tmux monitor machine CPU/MEM etc.
 #
 # *************************************************
 
 """
-Basic CPU & Memory Usage for Tmux
+Basic CPU & Memory Usage ,Network Download & Upload
+rate and Basic disk info of usage for Tmux
 
-Author: Zaiste! <oh@zaiste.net>
-
-Dash-meter inspired by tmux-mem-cpu
+Dash-meter inspired by tmux-monitor
 and code from psutil top.py.
 
-From https://github.com/zaiste/tmuxified
-
-Changes by Tony Narlock <tony@git-pull.com> at
-https://github.com/tony/tmux-config.
+Changes by shingo <gmboomker@gmail.com> at
+https://github.com/boomker/Mytmuxconf/tmuxmonitor/tmux-monitor
 """
+
 import os
 import sys
 import time
@@ -35,25 +33,28 @@ import threading
 if os.name != 'posix':
     sys.exit('platform not supported')
 elif os.uname()[0] == 'Darwin':
-    # ostype = 'M'
     nictype = 'en0'
 else:
-    # ostype = 'L'
     nictype = 'eth0'
 
 
+'''
+# 暂时弃用的function
 def get_dashes(perc):
     dashes = "|" * int((float(perc) / 10))
     empty_dashes = " " * (10 - len(dashes))
     return dashes, empty_dashes
+'''
 
 
 def get_mem_cpu_info():
     mem = psutil.virtual_memory()
     memtotal = str(mhsize.bytes2human(mem.total, precision=0))
-    memtn = int(memtotal[:-2])
+    memtv = int(memtotal[:-2])
+    # 总内存的数值(tv), 总内存的单位(tu)
     memtu = memtotal[-2:]
-    memtotal = "1GB" if memtn > 1000 and "MB" in memtu else memtotal
+    memtotal = "1GB" if memtv > 1000 and "MB" in memtu else memtotal
+    # 对于大于1000M, 但是不满1G的，算1G
     if hasattr(mem, 'available'):
         # memused = mem.used - mem.cached
         memfree = mem.available
@@ -62,14 +63,8 @@ def get_mem_cpu_info():
         # memused = mem.used
 
     cpuperc = psutil.cpu_percent(interval=1.0)
-    # cpu_dashes, cpu_empty_dashes = get_dashes(psutil.cpu_percent(interval=0.1))
-    # line = "{0}/{1} {2}%".format(
-    #     # cpu_dashes, cpu_empty_dashes,
-    #     memfree, memtotal, cpuperc
-    # )
     global mcinfo
     mcinfo = "{0}/{1} {2}%".format(
-        # cpu_dashes, cpu_empty_dashes,
         memfree, memtotal, cpuperc
     )
     # return line
@@ -92,13 +87,15 @@ def get_net_rate(D, U):
 
 def get_disk_info():
     rootpatusaperc = str(psutil.disk_usage('/').percent)
-    rootpartt = [i.device for i in psutil.disk_partitions() if i.mountpoint == '/']
-    rootpartt = str(rootpartt).strip("'[]").split('/')[2]
-    macdisk = "disk0"
-    rootpartt = macdisk if macdisk in rootpartt else rootpartt
-    frpwribytes = psutil.disk_io_counters(perdisk=True)[rootpartt][3]
+    # rootpartt = [i.device for i in psutil.disk_partitions() if i.mountpoint == '/']
+    # rootpartt = str(rootpartt).strip("'[]").split('/')[2]
+    # macdisk = "disk0"
+    # rootpartt = macdisk if macdisk in rootpartt else rootpartt
+    # frpwribytes = psutil.disk_io_counters(perdisk=True)[rootpartt][3]
+    frpwribytes = psutil.disk_io_counters()[3]
     time.sleep(1.0)
-    srpwribytes = psutil.disk_io_counters(perdisk=True)[rootpartt][3]
+    # srpwribytes = psutil.disk_io_counters(perdisk=True)[rootpartt][3]
+    srpwribytes = psutil.disk_io_counters()[3]
     rpwbinc = mhsize.bytes2human(int(srpwribytes - frpwribytes))
     global diskinfo
     diskinfo = "D:[/:{0}% W↓:{1}/s]".format(
@@ -108,33 +105,25 @@ def get_disk_info():
 
 
 def main():
-    # print(get_mem_cpu_info(), get_net_rate(1, 0))
     threads = []
-    for i in range(1):
-        thread1 = threading.Thread(target=get_mem_cpu_info)
-        thread2 = threading.Thread(target=get_net_rate, args=(1, 0))
-        thread3 = threading.Thread(target=get_disk_info)
-        thread1.start()
-        threads.append(thread1)
-        thread2.start()
-        threads.append(thread2)
-        thread3.start()
-        threads.append(thread3)
-        for thread in threads:
-            thread.join()
+    # for i in range(1):
+    thread1 = threading.Thread(target=get_mem_cpu_info)
+    thread2 = threading.Thread(target=get_net_rate, args=(1, 0))
+    thread3 = threading.Thread(target=get_disk_info)
+    thread1.start()
+    threads.append(thread1)
+    thread2.start()
+    threads.append(thread2)
+    thread3.start()
+    threads.append(thread3)
+    for thread in threads:
+        thread.join()
     lineinfo = "MC:[{0}] N:[{1}] {2}".format(
         mcinfo,
         netrinfo,
         diskinfo,
-        # get_mem_cpu_info(),
-        # get_net_rate(1, 0),
-        # get_disk_info(),
     )
     print(lineinfo)
-    # try:
-        # print(get_mem_cpu_info(), str(increase / 1024))
-    # except (KeyboardInterrupt, SystemExit):
-    #     pass
 
 
 if __name__ == '__main__':

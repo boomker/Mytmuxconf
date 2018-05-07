@@ -4,13 +4,16 @@
 import re
 import os
 import sys
+import pwd
 import subprocess
 import psutil
 
 sco = subprocess.check_output
 curpath = os.path.dirname(os.path.realpath(__file__))
-payloadpath = curpath + "/tmux-monitor"
-rolltxtscrp = curpath + "/text_roll.sh"
+# payloadpath = curpath + "/tmux-monitor"
+# 两字符串join，需要放到[列表中]
+payloadpath = ''.join([curpath, "/tmux-monitor"])
+rolltxtscrp = ''.join([curpath, "/text_roll.sh"])
 # tty = "ttys012"
 tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
 tty = str(tty, encoding='utf-8').strip('\n')
@@ -41,9 +44,8 @@ def colouroutput(u, h, **m):
         print("#[{fgdt},{bgdt}]{un}#[{fgdt},{bgdt}]@{ha}".format(**uhd))
 
     if len(m) != 0:
-        m = [i for i in m.values()]
-        m = m[0]
-        ml = len(m)
+        m = [i for i in m.values()][0]
+        # ml = len(m)
         mc = re.split(r'(?<=])(\s+)', m)[0]
         mcsl = re.split('(\s|])', mc)
         # ['MC:[1.7GB/8GB', ' ', '10.9%', ']', '']
@@ -51,16 +53,20 @@ def colouroutput(u, h, **m):
         # mccup = re.search('(?<=\s)[\d+.\d+]+(?=%)', mc)
         net = re.split(r'(?<=])(\s+)', m)[2]
         netsl = re.split('(\[|\]| )', net)
-        netb = re.search('(?<=\[).*(?=\])', net).group(0)
-        if ml > 10:
-            # netr = sco('bash {0} "{1}"'.format(rolltxtscrp, netb), shell=True)
-            netl = netb.split(' ')[0]
-            netr = netb.split(' ')[1]
+        # netsection list
+        netrv = re.search('(?<=\[).*(?=\])', net).group(0)
+        # netrate value
+        if len(m) > 30:
+            # netr = sco('bash {0} "{1}"'.format(rolltxtscrp, netrv), shell=True)
+            netl = netrv.split(' ')[0]
+            netr = netrv.split(' ')[1]
             netr = "".strip(' ') if "0.0" in netr else netr
             netl = "".strip(' ') if "0.0" in netl else netl
-            netlsr = netl + " " + netr
-            netlrl = len((netl + netr))
-            ns23 = netlsr if netlrl == 0 or netlrl >= 16 else netl + netr
+            # 对于上传和下载网速显示都为"0.0"的，让其直接不显示啦!~
+            netlsr = ''.join([netl, " ", netr])
+            # leftsection + space + rightsection
+            nlrl = len(''.join([netl, netr]))
+            ns23 = netlsr if nlrl == 0 or nlrl >= 16 else ''.join([netl, netr])
         ns1 = ''.join(netsl[0:2])
         ns4 = netsl[-2]
         disk = re.split(r'(?<=])(\s+)', m)[-1]
@@ -75,23 +81,26 @@ def colouroutput(u, h, **m):
         na, fgmc, fgnet, fgdrv, cbgc, cfgerr, cdebg = monitorcoldef
         mond = dict(mcs=mc, dis=disk, cdebgc=b + cdebg, cerrfg=f + cfgerr,
                     mci1=mcsl[0], mci2=mcsl[2], mci3=mcsl[-2], mcfg=f + fgmc,
-                    netfg=f + fgnet, nis=netr, nis1=ns1, nis23=ns23, nis4=ns4,
+                    netfg=f + fgnet, nis=net, nis1=ns1, nis23=ns23, nis4=ns4,
                     drvfg=f + fgdrv, di1=dinf1, di2=dinf2, di3=dinf3,
                     cbyb=b + cbgc, mcfgn=f + fgmc + na, drvfgn=f + fgdrv + na)
         if cup > 85.0:
-            mcis = "#[{mcfg},{cbyb}]{mci1} #[{cerrfg},{cdebgc}]{mci2}#[{mcfgn},{cbyb}]{mci3}".format(**mond)
+            mcis = "#[{mcfg},{cbyb}]{mci1} #[{cerrfg}," \
+                "{cdebgc}]{mci2}#[{mcfgn},{cbyb}]{mci3}".format(**mond)
         elif cup == 0.0:
             mcis = "#[{mcfg},{cbyb}]{mci1}#[{mcfgn},{cbyb}]{mci3}".format(**mond)
         else:
             mcis = "#[{mcfg},{cbyb}]{mcs}".format(**mond)
+        # cpu usage percent 大于85.0%的，状态栏闪烁数值;
+        # 使用率为"0.0"的也直接不用显示出来了.
         # -------------------------------------------------------
-        if len(net) > 10:
-            nets = '#[{netfg},{cbyb}]{nis1}{nis23}{nis4}'.format(**mond)
-        else:
-            nets = "#[{netfg},{cbyb}]{nis}".format(**mond)
+        nets = '#[{netfg},{cbyb}]{nis1}{nis23}{nis4}'.format(**mond)
+        # 网络下载上传这部分信息采用有数值就显示.
         # -------------------------------------------------------
+        # root 分区使用率大于"80%"时，就在状态栏闪烁其值.
         if rpup > 80.0:
-            drvs = "#[{drvfg},{cbyb}]{di1} #[{cerrfg},{cdebgc}]{di2}#[{drvfgn},{cbyb}]{di3}".format(**mond)
+            drvs = "#[{drvfg},{cbyb}]{di1} #[{cerrfg}," \
+                "{cdebgc}]{di2}#[{drvfgn},{cbyb}]{di3}".format(**mond)
         else:
             drvs = "#[{drvfg},{cbyb}]{dis}".format(**mond)
 
@@ -99,45 +108,58 @@ def colouroutput(u, h, **m):
 
 
 def get_remac_info(lrlocation):
+    '''
+    get remote machine info
+    用来获取远程计算机信息的
+    '''
     pyenv = "PYTHONIOENCODING=utf-8 python3"
+    # 加上"PYTHONIOENCODING=utf-8", 为防止乱码或其他问题
     pyenvc = r"'PYTHONIOENCODING=utf-8 python3 -c"
-    getuserpara = r'"import os;print(os.getlogin())"\\\''
+    # "-c" 表示执行后面指定的字符串指令
+    getuserpara = r'"import os;import pwd;' \
+        'print(pwd.getpwuid(os.geteuid()).pw_name)"\\\''
     rsshusern = sco('{0} {1} {2}'.format(
         sshcmd, pyenvc, getuserpara), shell=True)
     rsshusern = str(rsshusern, encoding='utf-8').strip('\n')
-    # sco('ssh aecs \'PYTHONIOENCODING=utf-8 python3 -c "import os;print(os.getlogin())"\'', shell=True)
 
-# sshipaddr = sco('ssh aecs \'PYTHONIOENCODING=utf-8 python3 -c "import psutil;print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\'', shell=True)
+    ''' sshipaddr = sco('ssh aecs \'PYTHONIOENCODING=utf-8 python3 -c "import \
+    psutil;print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\'', shell=True)
+    '''
     # __import__('ipdb').set_trace()
-    getipadpara = r'"import psutil;print(psutil.net_if_addrs()[\"eth0\"][0][1])"\\\''
+    # getipadpara = r'"import psutil;print(psutil.net_if_addrs()[\"eth0\"][0][1])"\\\''
+    getipadpara = r'"import psutil;' \
+        'print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\\\''
     reminsiip = sco('{0} {1} {2}'.format(
         sshcmd, pyenvc, getipadpara), shell=True)
     reminsiip = str(reminsiip, encoding='utf-8').strip('\n')
     if lrlocation == "left":
         colouroutput(rsshusern, reminsiip)
-        # print("{0}@{1}".format(rsshusern, reminsiip))
+        # 调用上面colouroutput func
     else:
         rminfotmp = sco("{0} '{1}' < '{2}'".format(
             sshcmd, pyenv, payloadpath), shell=True)
         rminfo = str(rminfotmp, encoding='utf-8').strip('\n')
-        # print(rminfo)
         colouroutput(None, None, m=rminfo)
 
 
 def main():
     sys.argv.append("")
+    # 附加一个空格防止tmux.conf里没有配置参数("left"|"right")
+    # side left or side right, 即获取tmux.conf里配置的参数
     slorsr = sys.argv[1]
 
     if sshcmd is None:
         if slorsr == "left":
-            username = os.getlogin()
+            # username = os.getlogin()
+            # 通过getlogin方法取用户名在有的系统(centos)会崩溃
+            username = pwd.getpwuid(os.geteuid()).pw_name
             hostaddr = psutil.net_if_addrs()[nictype][0][1]
             colouroutput(username, hostaddr)
         else:
             mclnrinfo = subprocess.check_output(
                 "python3 {0}".format(payloadpath), shell=True)
-                # "pypy3 {0}".format(payloadpath), shell=True)
             mclnrinfo = str(mclnrinfo, encoding='utf-8').strip('\n')
+            # 通过sco获取命令行的输出结果是字节格式，需转成str
             colouroutput(None, None, m=mclnrinfo)
     else:
         get_remac_info(slorsr)
