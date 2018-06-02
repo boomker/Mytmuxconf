@@ -2,6 +2,7 @@
 
 
 import os
+# import re
 import sys
 import pwd
 from subprocess import check_output as sco
@@ -13,19 +14,20 @@ curpath = os.path.dirname(os.path.realpath(__file__))
 # 两字符串join，需要放到[列表中]
 payloadpath = ''.join([curpath, "/tmux-monitor"])
 # rolltxtscrp = ''.join([curpath, "/text_roll.sh"])
-# tty = "ttys003"
 tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
 tty = str(tty, encoding='utf-8').strip('\n')
+# tty = "ttys003"
 sshpara = sco(['/bin/ps', '-t', tty, '-o', 'command'])
 sshpara = str(sshpara, encoding='utf-8').split('\n')
 sshcmd = [str(i) for i in sshpara if 'ssh ' in i]
 sshcmd = sshcmd[0] if len(sshcmd) != 0 else None
 
+nic_names = {'en0', 'eth0', 'ens32'}
 # if os.uname()[0] == 'Darwin':
-if 'Ubuntu' in os.uname()[-2]:
-    locnic_number = 0
-else:
-    locnic_number = 1
+# if 'Ubuntu' in os.uname()[-2]:
+#     locnic_number = 0
+# else:
+#     locnic_number = 1
 
 
 def colouroutput(username, hostaddr, **monitorvalue):
@@ -115,9 +117,9 @@ def colouroutput(username, hostaddr, **monitorvalue):
 
 
 def get_remac_info(lrlocation):
+    import re
     '''
-    get remote machine info
-    用来获取远程计算机信息的
+    get remote machine info  用来获取远程计算机信息的
     '''
     pyenv = "PYTHONIOENCODING=utf-8 python3"
     # 加上"PYTHONIOENCODING=utf-8", 为防止乱码或其他问题
@@ -134,15 +136,24 @@ def get_remac_info(lrlocation):
     '''
     # __import__('ipdb').set_trace()
     # getipadpara = r'"import psutil;print(psutil.net_if_addrs()[\"eth0\"][0][1])"\\\''
+    # locnic_names = set(psutil.net_if_addrs().keys())
+    get_locnic_names = r'"import psutil;' \
+        'print(set(psutil.net_if_addrs().keys()))"\\\''
+    locnic_names = sco('{0} {1} {2}'.format(
+        sshcmd, pyenvc, get_locnic_names), shell=True)
+    locnic_names = str(locnic_names, encoding='utf-8').strip('\n')
+    locnic_names = re.sub('[\'\{\}]', "", locnic_names)
+    locnic_names = set(locnic_names.split(', '))
+    remote_nic_name = ''.join(locnic_names.intersection(nic_names))
+    '''
     get_nic_name = r'"import psutil;' \
         'print(list(psutil.net_if_addrs().keys())[{0}])"\\\''.format(locnic_number)
     remote_nic_name = sco('{0} {1} {2}'.format(
         sshcmd, pyenvc, get_nic_name), shell=True)
     remote_nic_name = str(remote_nic_name, encoding='utf-8').strip('\n')
+    '''
     getipadpara = r'"import psutil;' \
         'print(psutil.net_if_addrs()[\\"{0}\\"][0][1])"\\\''.format(remote_nic_name)
-    # getipadpara = r'"import psutil;' \
-    #     'print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\\\''
     reminsiip = sco('{0} {1} {2}'.format(
         sshcmd, pyenvc, getipadpara), shell=True)
     reminsiip = str(reminsiip, encoding='utf-8').strip('\n')
@@ -170,9 +181,11 @@ def main():
         # username = os.getlogin()
         # 通过getlogin方法取用户名在有的系统(centos)会崩溃
         username = pwd.getpwuid(os.geteuid()).pw_name
-        nic_name = list(psutil.net_if_addrs().keys())[locnic_number]
+        locnic_names = set(psutil.net_if_addrs().keys())
+        nic_name = ''.join(locnic_names.intersection(nic_names))
         hostaddr = psutil.net_if_addrs()[nic_name][0][1]
         colouroutput(username, hostaddr)
+
     else:
         mclnrinfo = sco("python3 {0}".format(payloadpath), shell=True)
         mclnrinfo = str(mclnrinfo, encoding='utf-8').strip('\n')
