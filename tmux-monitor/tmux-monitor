@@ -32,11 +32,15 @@ import threading
 if 'posix' not in os.name:
     # sys.exit('platform not supported')
     raise SystemExit('platform not supported')
-elif 'Darwin' in os.uname()[0]:
-    nictype = 'en0'
-else:
-    nictype = 'eth0'
+# elif 'Darwin' in os.uname()[0]:
+#     nictype = 'en0'
+# else:
+#     nictype = 'eth0'
 
+elif 'Ubuntu' in os.uname()[-2]:
+    locnic_number = 0
+else:
+    locnic_number = 1
 
 '''
 # 暂时弃用的function
@@ -49,8 +53,8 @@ def get_dashes(perc):
 
 def get_mem_cpu_info():
     mem = psutil.virtual_memory()
-    memtotal = str(mhsize.bytes2human(mem.total, precision=0))
-    memtv = int(memtotal[:-2])
+    memtotal = str(mhsize.bytes2human(mem.total))
+    memtv = float(memtotal[:-2])
     # 总内存的数值(tv), 总内存的单位(tu)
     memtu = memtotal[-2:]
     memtotal = "1GB" if memtv > 1000 and "MB" in memtu else memtotal
@@ -72,6 +76,7 @@ def get_mem_cpu_info():
 
 def get_net_rate(D, U):
     import time
+    nictype = list(psutil.net_if_addrs().keys())[locnic_number]
     net_recv_bytes = psutil.net_io_counters(pernic=True)[nictype][D]
     net_sent_bytes = psutil.net_io_counters(pernic=True)[nictype][U]
     time.sleep(1.0)

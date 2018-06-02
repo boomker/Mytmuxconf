@@ -13,7 +13,7 @@ curpath = os.path.dirname(os.path.realpath(__file__))
 # 两字符串join，需要放到[列表中]
 payloadpath = ''.join([curpath, "/tmux-monitor"])
 # rolltxtscrp = ''.join([curpath, "/text_roll.sh"])
-# tty = "ttys001"
+# tty = "ttys003"
 tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
 tty = str(tty, encoding='utf-8').strip('\n')
 sshpara = sco(['/bin/ps', '-t', tty, '-o', 'command'])
@@ -22,10 +22,10 @@ sshcmd = [str(i) for i in sshpara if 'ssh ' in i]
 sshcmd = sshcmd[0] if len(sshcmd) != 0 else None
 
 # if os.uname()[0] == 'Darwin':
-if 'Darwin' in os.uname()[0]:
-    nictype = 'en0'
+if 'Ubuntu' in os.uname()[-2]:
+    locnic_number = 0
 else:
-    nictype = 'eth0'
+    locnic_number = 1
 
 
 def colouroutput(username, hostaddr, **monitorvalue):
@@ -134,8 +134,15 @@ def get_remac_info(lrlocation):
     '''
     # __import__('ipdb').set_trace()
     # getipadpara = r'"import psutil;print(psutil.net_if_addrs()[\"eth0\"][0][1])"\\\''
+    get_nic_name = r'"import psutil;' \
+        'print(list(psutil.net_if_addrs().keys())[{0}])"\\\''.format(locnic_number)
+    remote_nic_name = sco('{0} {1} {2}'.format(
+        sshcmd, pyenvc, get_nic_name), shell=True)
+    remote_nic_name = str(remote_nic_name, encoding='utf-8').strip('\n')
     getipadpara = r'"import psutil;' \
-        'print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\\\''
+        'print(psutil.net_if_addrs()[\\"{0}\\"][0][1])"\\\''.format(remote_nic_name)
+    # getipadpara = r'"import psutil;' \
+    #     'print(psutil.net_if_addrs()[\\"eth0\\"][0][1])"\\\''
     reminsiip = sco('{0} {1} {2}'.format(
         sshcmd, pyenvc, getipadpara), shell=True)
     reminsiip = str(reminsiip, encoding='utf-8').strip('\n')
@@ -163,7 +170,8 @@ def main():
         # username = os.getlogin()
         # 通过getlogin方法取用户名在有的系统(centos)会崩溃
         username = pwd.getpwuid(os.geteuid()).pw_name
-        hostaddr = psutil.net_if_addrs()[nictype][0][1]
+        nic_name = list(psutil.net_if_addrs().keys())[locnic_number]
+        hostaddr = psutil.net_if_addrs()[nic_name][0][1]
         colouroutput(username, hostaddr)
     else:
         mclnrinfo = sco("python3 {0}".format(payloadpath), shell=True)
