@@ -14,15 +14,24 @@ curpath = os.path.dirname(os.path.realpath(__file__))
 # 两字符串join，需要放到[列表中]
 payloadpath = ''.join([curpath, "/tmux-monitor"])
 # rolltxtscrp = ''.join([curpath, "/text_roll.sh"])
-tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
-tty = str(tty, encoding='utf-8').strip('\n')
-# tty = "ttys003"
+# tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
+# tty = str(tty, encoding='utf-8').strip('\n')
+tty = "ttys010"
 sshpara = sco(['/bin/ps', '-t', tty, '-o', 'command'])
 sshpara = str(sshpara, encoding='utf-8').split('\n')
 sshcmd = [str(i) for i in sshpara if 'ssh ' in i]
-sshcmd = sshcmd[0] if len(sshcmd) != 0 else None
+# sshcmd = sshcmd[0] if len(sshcmd) != 0 else None
+# print(type(sshcmd))
+if len(sshcmd) != 0:
+    if "jump" in sshcmd[0]:
+        sshcmd = None
+    else:
+        sshcmd = sshcmd[0]
+else:
+    sshcmd = None
 
-nic_names = {'en0', 'eth0', 'ens32'}
+
+nic_names = {'en0', 'eth0', 'ens32', 'ens33'}
 # if os.uname()[0] == 'Darwin':
 # if 'Ubuntu' in os.uname()[-2]:
 #     locnic_number = 0
