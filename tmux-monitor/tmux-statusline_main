@@ -14,9 +14,9 @@ curpath = os.path.dirname(os.path.realpath(__file__))
 # 两字符串join，需要放到[列表中]
 payloadpath = ''.join([curpath, "/tmux-monitor"])
 # rolltxtscrp = ''.join([curpath, "/text_roll.sh"])
-# tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
-# tty = str(tty, encoding='utf-8').strip('\n')
-tty = "ttys010"
+tty = sco(['tmux', 'display', '-p', '#{pane_tty}'])
+tty = str(tty, encoding='utf-8').strip('\n')
+# tty = "ttys010"
 sshpara = sco(['/bin/ps', '-t', tty, '-o', 'command'])
 sshpara = str(sshpara, encoding='utf-8').split('\n')
 sshcmd = [str(i) for i in sshpara if 'ssh ' in i]
